@@ -1,18 +1,18 @@
 /*
  * Fadecandy Firmware
- * 
+ *
  * Copyright (c) 2013 Micah Elizabeth Scott
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
@@ -151,9 +151,38 @@ extern "C" int main()
     serial_begin(BAUD2DIV(115200));
     serial_print("Fadecandy v" DEVICE_VER_STRING "\r\n");
 
+    // Start in an idle mode that works the LEDs. Initialize the buffer for use.
+    bool in_startup_idle = true;
+    buffers.flags = CFLAG_NO_INTERPOLATION | CFLAG_NO_DITHERING | CFLAG_NO_ACTIVITY_LED;
+    uint16_t *lut = buffers.lutCurrent.entries;
+    for (int i = 0; i < 256; i += 3) {
+        lut[i + 0] = i << 4;
+        lut[i + 1] = i << 4;
+        lut[i + 2] = i << 4;
+    }
+
     // Application main loop
     while (usb_dfu_state == DFU_appIDLE) {
         watchdog_refresh();
+
+        // If idling, prep red pulse
+        if (in_startup_idle) {
+            int m = millis() % 2000;
+            if (m > 1000) m = 2000 - m;
+
+            uint8_t b = 255 - 128 * m / 1000;
+            for (int i = 0; i < 512; i++) {
+                uint8_t *pixelNext = (uint8_t *)buffers.fbNext->pixel(i);
+                pixelNext[0] = b;
+            }
+
+            // Blink LED
+            if (m % 1000 > 500) {
+                buffers.flags &= ~CFLAG_LED_CONTROL;
+            } else {
+                buffers.flags |= CFLAG_LED_CONTROL;
+            }
+        }
 
         // Select a different drawing loop based on our firmware config flags
         switch (buffers.flags & (CFLAG_NO_INTERPOLATION | CFLAG_NO_DITHERING)) {
@@ -176,7 +205,10 @@ extern "C" int main()
         leds.show();
 
         // We can switch to the next frame's buffer now.
-        buffers.finalizeFrame();
+        if (buffers.finalizeFrame() && in_startup_idle) {
+            // A frame was completed, so stop idling
+            in_startup_idle = false;
+        }
 
         // Performance counter, for monitoring frame rate externally
         perf_frameCounter++;

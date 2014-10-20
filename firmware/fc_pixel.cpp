@@ -1,19 +1,19 @@
 /*
  * Fadecandy Firmware: Low-level pixel update code
  * (Included into fadecandy.cpp)
- * 
+ *
  * Copyright (c) 2013 Micah Elizabeth Scott
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
  * the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
@@ -39,7 +39,7 @@ static uint32_t FCP_FN(updatePixel)(uint32_t icPrev, uint32_t icNext,
 
 #if FCP_INTERPOLATION
     // Per-channel linear interpolation and conversion to 16-bit color.
-    // Result range: [0, 0xFFFF] 
+    // Result range: [0, 0xFFFF]
     int iR = (pixelPrev[0] * icPrev + pixelNext[0] * icNext) >> 16;
     int iG = (pixelPrev[1] * icPrev + pixelNext[1] * icNext) >> 16;
     int iB = (pixelPrev[2] * icPrev + pixelNext[2] * icNext) >> 16;
@@ -50,7 +50,7 @@ static uint32_t FCP_FN(updatePixel)(uint32_t icPrev, uint32_t icNext,
 #endif
 
     // Pass through our color LUT
-    // Result range: [0, 0xFFFF] 
+    // Result range: [0, 0xFFFF]
     iR = FCP_FN(lutInterpolate)(buffers.lutCurrent.r, iR);
     iG = FCP_FN(lutInterpolate)(buffers.lutCurrent.g, iG);
     iB = FCP_FN(lutInterpolate)(buffers.lutCurrent.b, iB);
