@@ -156,9 +156,9 @@ extern "C" int main()
     buffers.flags = CFLAG_NO_INTERPOLATION | CFLAG_NO_DITHERING | CFLAG_NO_ACTIVITY_LED;
     uint16_t *lut = buffers.lutCurrent.entries;
     for (int i = 0; i < 256; i += 3) {
-        lut[i + 0] = i << 4;
-        lut[i + 1] = i << 4;
-        lut[i + 2] = i << 4;
+        lut[255 - i + 0] = i << 2;
+        lut[255 - i + 1] = i << 2;
+        lut[255 - i + 2] = i << 2;
     }
 
     // Application main loop
@@ -170,7 +170,7 @@ extern "C" int main()
             int m = millis() % 2000;
             if (m > 1000) m = 2000 - m;
 
-            uint8_t b = 255 - 128 * m / 1000;
+            uint8_t b = 0xFF * m / 1000;
             for (int i = 0; i < 512; i++) {
                 uint8_t *pixelNext = (uint8_t *)buffers.fbNext->pixel(i);
                 pixelNext[0] = b;
